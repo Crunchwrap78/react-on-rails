@@ -25,8 +25,8 @@ export function createPost(props){
   }
 }
 
-export function updatePost (props){
-  const request = axios.put(`${ROOT_URL}/posts${API_KEY}`, props);
+export function updatePost (id, props){
+  const request = axios.put(`${ROOT_URL}/posts/${id}${API_KEY}`, props);
   return{
     type: UPDATE_POST,
     payload: request
