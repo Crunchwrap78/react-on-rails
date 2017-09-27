@@ -1,73 +1,64 @@
-import React, { Component, PropTypes } from 'react';
-import { reduxForm } from 'redux-form';
-import { createPost } from '../actions/index';
+import React, { Component } from 'react';
+import { Field, reduxForm } from 'redux-form';
+import { connect } from 'react-redux';
+import { createPost, closeForm } from '../actions/index';
 import { Link } from 'react-router';
 
 class PostsNew extends Component{
-  static contextTypes = {
-    router: PropTypes.object
-  };
 
-  onSubmit(props) {
-    this.props.createPost(props)
-      .then(() => {
-        // blog post has been created, navigate the user to the index
-        // We navigate by calling this.context.router.push with the
-        // new path to navigate to.
-        this.context.router.push('/');
-      });
+  handleClick() {
+    this.props.closeForm();
+  }
+
+  renderField(field) {
+    const { meta: { touched, error } } = field;
+    const className = `form-group ${touched && error ? 'has-danger': ''}`;
+
+    return (
+      <div className={className}>
+        <label>{field.label}</label>
+        <input
+          className="form-control"
+          type="text"
+          {...field.input}
+        />
+        <div className="text-help">
+          {touched ? error : ''}
+        </div>
+      </div>
+    );
+  }
+
+  onSubmit(values) {
+    this.props.createPost(values, () => {
+      this.props.closeForm();
+    });
   }
 
   render(){
-    const { fields: { title, categories, content }, handleSubmit } =this.props;
+    const { handleSubmit } = this.props;
 
     return(
-      <div className="modal fade" id="myModalNorm" tabIndex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <button type="button" className="close" data-dismiss="modal">
-                <span aria-hidden="true">&times;</span> <span className="sr-only">Close</span>
-              </button>
-              <h4 className="modal-title" id="myModalLabel">
-                    Create a New Post
-              </h4>
-            </div>
-            <div className="modal-body">
-              <form
-                role="modal"
-                 onSubmit={handleSubmit(this.onSubmit.bind(this))}>
+        <form onSubmit={handleSubmit(this.onSubmit.bind(this))}>
+          <Field
+            label="Title"
+            name="title"
+            component={this.renderField}
+          />
+          <Field
+            label="Categories"
+            name="categories"
+            component={this.renderField}
+          />
+          <Field
+            label="Post Content"
+            name="content"
+            component={this.renderField}
+          />
+          <button type="submit" className="btn btn-primary ">Submit</button>
+          <button className="btn btn-danger" onClick={this.handleClick.bind(this)}>Cancel</button>
 
-                  <div className={`form-group ${title.touched && title.invalid ? 'has-danger' : ''}`}>
-                    <label>Title</label>
-                    <input type="text" className="form-control" {...title} />
-                   <div className="text-help">
-                     {title.touched ? title.error : ''}
-                   </div>
-                </div>
-
-                <div className={`form-group ${categories.touched && categories.invalid ? 'has-danger' : ''}`}>
-                  <label>Categories</label>
-                  <input type="text" className="form-control" {...categories} />
-                  <div className="text-help">
-                    {categories.touched ? categories.error : ''}
-                  </div>
-                </div>
-
-                <div className={`form-group ${content.touched && content.invalid ? 'has-danger' : ''}`}>
-                  <label>Content</label>
-                  <textarea className="form-control" {...content} />
-                  <div className="text-help">
-                    {content.touched ? content.error : ''}
-                  </div>
-                </div>
-                  <button type="submit" className="btn btn-primary btn-b" >Submit</button>
-                <button className="btn btn-danger btn-r" data-dismiss="modal">Cancel</button>
-              </form>
-            </div>
-          </div>
-       </div>
-     </div>
+        </form>
     )
   }
 }
@@ -89,11 +80,14 @@ function validate(values){
 
 //connect: first agument is mapStateToProps, 2nd is mapDispatchToProps
 //reduxForm 1st is form config, 2nd is mapStateToProps, 3rd is mapDispatchToProps
+function mapStateToProps(state) {
+  return { isOpen: state.form.isOpen }
+}
 
 export default reduxForm({
+  validate,
   form: 'PostsNewForm',
-  fields: ['title', 'categories', 'content'],
-  validate
-}, null, { createPost })(PostsNew);
-
+})(
+  connect(mapStateToProps, { createPost, closeForm })(PostsNew)
+);
 //user types somthing in...record

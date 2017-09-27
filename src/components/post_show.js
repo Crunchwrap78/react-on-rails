@@ -1,32 +1,27 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { fetchPost, deletePost } from '../actions/index';
+import { fetchPost, deletePost, showForm } from '../actions/index';
 import PostsEdit from './post_edit';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 class PostsShow extends Component{
-  static contextTypes = {
-    router: PropTypes.object
-  };
 
-  componentWillMount(){
-    this.props.fetchPost(this.props.params.id);
+  componentDidMount(){
+    const { id } = this.props.match.params;
+    this.props.fetchPost(id);
   }
 
   onDeleteClick(){
-    this.props.deletePost(this.props.params.id)
-      .then(() => { this.context.router.push('/'); });
+    const { id } = this.props.match.params;
+    this.props.deletePost(id, () => {
+      this.props.history.push('/');
+    });
   }
 
-  onSubmit(props) {
-    this.props.updatePost(props)
-      .then(() => {
-        // blog post has been edited, navigate the user to the index
-        // We navigate by calling this.context.router.push with the
-        // new path to navigate to.
-        this.context.router.push('/');
-      });
+  handleClick(){
+    this.props.showForm();
   }
+
 
   render(){
     const { post } = this.props;
@@ -36,7 +31,8 @@ class PostsShow extends Component{
     }
 
     return(
-      <div>
+      this.props.isOpen === false
+      ? <div>
         <Link to="/">Back to Index</Link>
         <button
           className="btn btn-danger pull-xs-right btn-r"
@@ -44,20 +40,21 @@ class PostsShow extends Component{
           Delete Post
         </button>
         <button
-          className="btn btn-btn-primary  pull-xs-right" data-toggle="modal" data-target="#ModalNorm">
+          className="btn btn-btn-primary"
+          onClick={this.handleClick.bind(this)}>
           Edit Post
         </button>
         <h3>{post.title}</h3>
         <h6>Categories: {post.categories}</h6>
         <p>{post.content}</p>
-        <PostsEdit post={this.props.post} />
       </div>
+      : <PostsEdit post={post} />
     )
   }
 }
 
-function mapStateToProps(state) {
-  return { post: state.posts.post}
+function mapStateToProps({ posts }) {
+  return { post: posts.post, isOpen: posts.isOpen }
 }
 
-export default connect(mapStateToProps, { fetchPost, deletePost })(PostsShow);
+export default connect(mapStateToProps, { fetchPost, deletePost, showForm })(PostsShow);
